@@ -1,30 +1,28 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom"
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 
-import Login from "./pages/Login"
-import Scoreboard from "./pages/Scoreboard"
-import ScoreEntry from "./pages/ScoreEntry"
-import AdminLogin from "./pages/AdminLogin"
+// Import pages
+import Home from './pages/Home';
+import LeaderboardPage from './pages/LeaderboardPage';
+import SubmitScore from './pages/SubmitScore';
+import AdminLogin from './pages/AdminLogin';
+
+// Import styles
+import './index.css';
 
 function App() {
-
   return (
-    <div className="app-bg min-h-screen text-white">
-
-      <Routes>
-
-        <Route path="/" element={<Scoreboard />} />
-
-        <Route path="/login" element={<Login />} />
-
-        <Route path="/score-entry" element={<ScoreEntry />} />
-
-        <Route path="/admin" element={<AdminLogin />} />
-
-      </Routes>
-
-    </div>
-  )
-
+    <Router>
+      <div className="App">
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/leaderboard" element={<LeaderboardPage />} />
+          <Route path="/submit-score" element={<SubmitScore />} />
+          <Route path="/admin" element={<AdminLogin />} />
+        </Routes>
+      </div>
+    </Router>
+  );
 }
 
-export default App
+export default App;
