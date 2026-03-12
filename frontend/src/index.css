@@ -1,0 +1,83 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+/* ===== Global Styling ===== */
+
+body{
+  margin:0;
+  font-family: 'Orbitron', sans-serif;
+  color:white;
+}
+
+
+/* ===== Arcade Background ===== */
+
+.app-bg{
+
+  min-height:100vh;
+
+  background:
+  radial-gradient(circle at top, #3b1d6b 0%, #14082a 60%, #080312 100%);
+
+  background-attachment: fixed;
+
+}
+
+
+/* ===== Neon Text Glow ===== */
+
+.neon-text{
+  color:#ff4fd8;
+  text-shadow:
+  0 0 5px #ff4fd8,
+  0 0 10px #ff4fd8,
+  0 0 20px #ff4fd8;
+}
+
+
+/* ===== Neon Panels ===== */
+
+.panel{
+  background: rgba(25, 10, 60, 0.7);
+  border:1px solid rgba(255,255,255,0.1);
+  backdrop-filter: blur(10px);
+  border-radius:12px;
+}
+
+
+/* ===== Neon Buttons ===== */
+
+.btn-neon{
+
+  background: linear-gradient(135deg,#ff2bbf,#6a5cff);
+  padding:10px 20px;
+  border-radius:8px;
+
+  transition:0.3s;
+
+}
+
+.btn-neon:hover{
+
+  transform: scale(1.05);
+
+  box-shadow:
+  0 0 10px #ff2bbf,
+  0 0 20px #6a5cff;
+
+}
+
+
+/* ===== Arcade Glow Borders ===== */
+
+.glow-border{
+
+  border:1px solid #6a5cff;
+
+  box-shadow:
+  0 0 8px #6a5cff,
+  inset 0 0 8px #6a5cff;
+
+}
