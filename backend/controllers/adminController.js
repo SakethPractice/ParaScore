@@ -3,48 +3,6 @@ const bcrypt = require('bcryptjs');
 const db = require('../database/db');
 
 /**
- * Admin login - Issues JWT token
- * POST /api/admin/login
- * Body: { username, password }
- */
-const adminLogin = async (req, res) => {
-  try {
-    const { username, password } = req.body;
-
-    // Validation
-    if (!username || !password) {
-      return res.status(400).json({ error: 'Username and password are required' });
-    }
-
-    // Hardcoded admin credentials for now
-    // In production, store these securely in database with hashed passwords
-    const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'admin';
-    const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'deltatime2024';
-
-    // Simple credential check
-    if (username !== ADMIN_USERNAME || password !== ADMIN_PASSWORD) {
-      return res.status(401).json({ error: 'Invalid credentials' });
-    }
-
-    // Generate JWT token
-    const token = jwt.sign(
-      { username, role: 'admin' },
-      process.env.JWT_SECRET || 'your-secret-key',
-      { expiresIn: '24h' }
-    );
-
-    res.status(200).json({
-      message: 'Login successful',
-      token,
-      username
-    });
-  } catch (error) {
-    console.error('Login error:', error);
-    res.status(500).json({ error: 'Login failed' });
-  }
-};
-
-/**
  * Create a new game
  * POST /api/admin/games
  * Auth: Required
@@ -205,11 +163,127 @@ const getAllScores = async (req, res) => {
   }
 };
 
+/**
+ * Clean up duplicate SRNs - keep only the best score per SRN per game
+ * POST /api/admin/cleanup
+ * Auth: Required
+ */
+const cleanupDuplicates = async (req, res) => {
+  try {
+    let totalDeleted = 0;
+
+    // Get all SRN and game combinations that have duplicates
+    const duplicates = await db.query(`
+      SELECT srn, game_id
+      FROM scores
+      WHERE srn IS NOT NULL
+      GROUP BY srn, game_id
+      HAVING COUNT(*) > 1
+    `);
+
+    console.log(`Found ${duplicates.length} SRN-game combinations with duplicates`);
+
+    for (const dup of duplicates) {
+      const { srn, game_id } = dup;
+      
+      // Get all scores for this SRN and game
+      const scores = await db.query(
+        'SELECT id, score FROM scores WHERE srn = ? AND game_id = ? ORDER BY id ASC',
+        [srn, game_id]
+      );
+
+      if (scores.length <= 1) continue;
+
+      console.log(`Processing SRN: ${srn}, Game: ${game_id}, Count: ${scores.length}`);
+
+      // Find the best score
+      let bestIndex = 0;
+      let bestScore = scores[0].score;
+
+      for (let i = 1; i < scores.length; i++) {
+        const comparison = compareScores(game_id, scores[i].score, bestScore);
+        if (comparison > 0) {
+          bestIndex = i;
+          bestScore = scores[i].score;
+        }
+      }
+
+      // Delete all scores except the best one
+      for (let i = 0; i < scores.length; i++) {
+        if (i !== bestIndex) {
+          await db.execute('DELETE FROM scores WHERE id = ?', [scores[i].id]);
+          totalDeleted++;
+          console.log(`Deleted score ${scores[i].id} - inferior to ${scores[bestIndex].id}`);
+        }
+      }
+    }
+
+    res.status(200).json({
+      message: 'Duplicate cleanup completed',
+      scoresDeleted: totalDeleted
+    });
+  } catch (error) {
+    console.error('Error cleaning up duplicates:', error);
+    res.status(500).json({ error: 'Failed to clean up duplicates' });
+  }
+};
+
+/**
+ * Helper function to compare scores based on game type
+ * Returns: 1 if newScore is better, -1 if existingScore is better
+ */
+const compareScores = (game_id, newScore, existingScore) => {
+  if (game_id === 'NFS') {
+    // For NFS: time format MM:SS:ms - lower is better
+    const convertTimeToMs = (timeStr) => {
+      const parts = String(timeStr).split(':');
+      if (parts.length === 3) {
+        const minutes = parseInt(parts[0]) || 0;
+        const seconds = parseInt(parts[1]) || 0;
+        const ms = parseInt(parts[2]) || 0;
+        return minutes * 60000 + seconds * 1000 + ms;
+      }
+      return Infinity;
+    };
+
+    const newMs = convertTimeToMs(newScore);
+    const existingMs = convertTimeToMs(existingScore);
+
+    if (newMs < existingMs) return 1;
+    if (newMs > existingMs) return -1;
+    return 0;
+  } else if (game_id === 'ALTOS') {
+    // For ALTOS: score - higher is better
+    const newVal = parseInt(newScore) || 0;
+    const existingVal = parseInt(existingScore) || 0;
+
+    if (newVal > existingVal) return 1;
+    if (newVal < existingVal) return -1;
+    return 0;
+  } else if (game_id === 'ULTRAKILL') {
+    // For ULTRAKILL: letter grade - P is best
+    const gradeRanking = { 'P': 10, 'S': 9, 'A': 8, 'B': 7, 'C': 6, 'D': 5, 'F': 1 };
+    const getGradeValue = (grade) => {
+      const firstChar = String(grade).toUpperCase().charAt(0);
+      return gradeRanking[firstChar] || 0;
+    };
+    
+    const newVal = getGradeValue(newScore);
+    const existingVal = getGradeValue(existingScore);
+
+    if (newVal > existingVal) return 1;
+    if (newVal < existingVal) return -1;
+    return 0;
+  }
+
+  return 0;
+};
+
 module.exports = {
-  adminLogin,
   createGame,
   deleteGame,
   deleteScore,
   resetLeaderboard,
-  getAllScores
+  getAllScores,
+  cleanupDuplicates
 };

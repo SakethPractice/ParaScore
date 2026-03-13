@@ -1,4 +1,5 @@
 const mysql = require('mysql2/promise');
+const bcrypt = require('bcryptjs');
 
 // Create connection pool
 const pool = mysql.createPool({
@@ -16,6 +17,22 @@ const initialize = async () => {
   try {
     const connection = await pool.getConnection();
     console.log('✅ Connected to MySQL database');
+
+    // Drop and recreate users table to ensure proper password hashing
+    await connection.execute('DROP TABLE IF EXISTS users');
+    
+    // Create users table
+    await connection.execute(`
+      CREATE TABLE IF NOT EXISTS users (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        username VARCHAR(50) NOT NULL UNIQUE,
+        password VARCHAR(255) NOT NULL,
+        role VARCHAR(20) NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_username (username),
+        INDEX idx_role (role)
+      )
+    `);
 
     // Create games table
     await connection.execute(`
@@ -49,6 +66,29 @@ const initialize = async () => {
       ('ALTOS', 'Altos Adventure', 'Jump and survive'),
       ('ULTRAKILL', 'ULTRAKILL', 'Fast-paced action combat')
     `);
+
+    // Insert default users with properly hashed passwords
+    const users = [
+      { username: 'admin', password: 'deltatime2024', role: 'admin' },
+      { username: 'terminal1', password: 'terminal1', role: 'terminal' },
+      { username: 'terminal2', password: 'terminal2', role: 'terminal' },
+      { username: 'terminal3', password: 'terminal3', role: 'terminal' }
+    ];
+
+    for (const user of users) {
+      const existingUser = await connection.execute(
+        'SELECT id FROM users WHERE username = ?',
+        [user.username]
+      );
+
+      if (existingUser[0].length === 0) {
+        const hashedPassword = await bcrypt.hash(user.password, 10);
+        await connection.execute(
+          'INSERT INTO users (username, password, role) VALUES (?, ?, ?)',
+          [user.username, hashedPassword, user.role]
+        );
+      }
+    }
 
     connection.release();
     console.log('✅ Database tables initialized');

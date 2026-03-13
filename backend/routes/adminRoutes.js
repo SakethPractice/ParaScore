@@ -2,28 +2,26 @@ const express = require('express');
 const router = express.Router();
 const authMiddleware = require('../middleware/authMiddleware');
 const {
-  adminLogin,
   createGame,
   deleteGame,
   deleteScore,
   resetLeaderboard,
-  getAllScores
+  getAllScores,
+  cleanupDuplicates
 } = require('../controllers/adminController');
 
 /**
- * Admin endpoints
- * POST /api/admin/login - Public, no auth required
- * All other routes require JWT authentication
+ * Admin endpoints - All require JWT authentication
  */
 
-// POST /api/admin/login - Admin authentication
-router.post('/login', adminLogin);
-
-// Protected routes
+// Protected routes - require JWT token
 router.use(authMiddleware);
 
 // GET /api/admin/scores - Get all scores
 router.get('/scores', getAllScores);
+
+// POST /api/admin/cleanup - Clean up duplicate SRNs
+router.post('/cleanup', cleanupDuplicates);
 
 // POST /api/admin/games - Create a new game
 router.post('/games', createGame);
