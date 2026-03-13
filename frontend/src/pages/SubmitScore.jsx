@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Send, AlertTriangle, ArrowLeft, Gamepad2, User, Hash, Trophy } from 'lucide-react';
+import { useEffect } from "react";
 import { useNavigate } from 'react-router-dom';
+import API from "../services/api";
 
 const SubmitScore = () => {
   const navigate = useNavigate();
@@ -33,88 +35,97 @@ const SubmitScore = () => {
     }));
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    
-    // Format the score based on game type
-    const game = getCurrentGame();
-    let finalScore = formData.score;
-    
-    if (game?.inputType === 'time') {
-      // Format as MM:SS:mmm
-      const minutes = String(formData.minutes).padStart(2, '0');
-      const seconds = String(formData.seconds).padStart(2, '0'); 
-      const milliseconds = String(formData.milliseconds).padStart(3, '0');
-      finalScore = `${minutes}:${seconds}:${milliseconds}`;
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  setIsSubmitting(true);
+
+  const game = getCurrentGame();
+  let finalScore = formData.score;
+
+  // Format time scores
+  if (game?.inputType === "time") {
+    const minutes = String(formData.minutes).padStart(2, "0");
+    const seconds = String(formData.seconds).padStart(2, "0");
+    const milliseconds = String(formData.milliseconds).padStart(3, "0");
+    finalScore = `${minutes}:${seconds}:${milliseconds}`;
+  }
+
+  // Cheater detection
+  let isCheater = false;
+
+  if (game?.inputType === "time") {
+    const totalMs =
+      parseInt(formData.minutes) * 60 * 1000 +
+      parseInt(formData.seconds) * 1000 +
+      parseInt(formData.milliseconds);
+
+    const thresholdMs = 2 * 60 * 1000 + 26 * 1000;
+
+    if (totalMs < thresholdMs) {
+      isCheater = true;
     }
-    
-    console.log('Submitting:', {
-      ...formData,
-      finalScore,
-      gameType: game?.inputType
+  }
+
+  if (game?.inputType === "score") {
+    const scoreValue = parseInt(formData.score);
+
+    if (scoreValue > 50000) {
+      isCheater = true;
+    }
+  }
+
+  if (game?.inputType === "rank") {
+    if (formData.score === "P") {
+      isCheater = true;
+    }
+  }
+
+  if (isCheater) {
+    setShowCheaterWarning(true);
+    setTimeout(() => setShowCheaterWarning(false), 4000);
+    setIsSubmitting(false);
+    return;
+  }
+
+  try {
+    await API.post("/scores/submit", {
+      playerName: formData.playerName,
+      srn: formData.srn,
+      game: formData.game,
+      score: finalScore,
     });
-    
-    // Simulate API call
+
+    setSubmittedData({
+      playerName: formData.playerName,
+      srn: formData.srn,
+      game: game?.name,
+      score: finalScore,
+      gameType: game?.inputType,
+    });
+
+    setSubmitSuccess(true);
+
     setTimeout(() => {
-      // Cheater detection based on game-specific thresholds
-      let isCheater = false;
-      
-      if (game?.inputType === 'time') {
-        // NFS: Check if time is less than 2:26.000 (impossibly fast)
-        const totalMs = (parseInt(formData.minutes) * 60 * 1000) + 
-                       (parseInt(formData.seconds) * 1000) + 
-                       parseInt(formData.milliseconds);
-        const thresholdMs = 2 * 60 * 1000 + 26 * 1000; // 2:26.000 in milliseconds
-        if (totalMs < thresholdMs) {
-          isCheater = true;
-        }
-      } else if (game?.inputType === 'score') {
-        // Altos Adventure: Check if score is greater than 50,000
-        const scoreValue = parseInt(formData.score);
-        if (scoreValue > 50000) {
-          isCheater = true;
-        }
-      } else if (game?.inputType === 'rank') {
-        // ULTRAKILL: Check if rank is P (impossibly perfect)
-        if (formData.score === 'P') {
-          isCheater = true;
-        }
-      }
-      
-      if (isCheater) {
-        setShowCheaterWarning(true);
-        setTimeout(() => setShowCheaterWarning(false), 4000);
-      } else {
-        // Store the submitted data for display
-        setSubmittedData({
-          playerName: formData.playerName,
-          srn: formData.srn,
-          game: game?.name || 'Unknown Game',
-          score: finalScore,
-          gameType: game?.inputType
-        });
-        setSubmitSuccess(true);
-        
-        // Reload the form after 3 seconds
-        setTimeout(() => {
-          setSubmitSuccess(false);
-          setSubmittedData(null);
-          // Reset form
-          setFormData({
-            playerName: '',
-            srn: '',
-            game: 'ALTOS',
-            score: '',
-            minutes: '',
-            seconds: '',
-            milliseconds: ''
-          });
-        }, 3000);
-      }
-      setIsSubmitting(false);
-    }, 2000);
-  };
+      setSubmitSuccess(false);
+      setSubmittedData(null);
+
+      setFormData({
+        playerName: "",
+        srn: "",
+        game: "ALTOS",
+        score: "",
+        minutes: "",
+        seconds: "",
+        milliseconds: "",
+      });
+    }, 3000);
+  } catch (err) {
+    console.error(err);
+    alert("Error submitting score");
+  }
+
+  setIsSubmitting(false);
+};
 
   const getCurrentGame = () => games.find(g => g.id === formData.game);
   

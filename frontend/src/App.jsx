@@ -19,6 +19,7 @@ function App() {
           <Route path="/leaderboard" element={<LeaderboardPage />} />
           <Route path="/submit-score" element={<SubmitScore />} />
           <Route path="/admin" element={<AdminLogin />} />
+          <Route path="/login" element={<Login />} />
         </Routes>
       </div>
     </Router>
