@@ -174,7 +174,7 @@ const Home = () => {
                 >
                   <span className="relative z-10 flex items-center justify-center space-x-2">
                     <Zap className="w-5 h-5" />
-                    <span>Enter Leaderboard</span>
+                    <span>View Leaderboard</span>
                   </span>
                   <div className="absolute -inset-1 bg-gradient-to-r from-[#7B3FE4] to-[#FF4FD8] rounded-lg blur opacity-30 group-hover:opacity-50 transition-opacity" />
                 </motion.button>
@@ -189,9 +189,30 @@ const Home = () => {
                     boxShadow: "0 0 30px rgba(0,229,255,0.7)"
                   }}
                   whileTap={{ scale: 0.95 }}
-                  onClick={() => navigate('/submit-score')}
+                  onClick={() => navigate('/login')}
                 >
-                  Submit Score
+                  <span className="flex items-center justify-center space-x-2">
+                    <User className="w-5 h-5" />
+                    <span>Terminal Login</span>
+                  </span>
+                </motion.button>
+
+                <motion.button 
+                  className="w-full border-2 border-[#FF4FD8] text-[#FF4FD8] font-bold py-3 px-6 rounded-lg relative overflow-hidden group hover:bg-[#FF4FD8] hover:text-[#0B0F2F] transition-colors"
+                  style={{
+                    boxShadow: "0 0 20px rgba(255,79,216,0.5)"
+                  }}
+                  whileHover={{ 
+                    scale: 1.05,
+                    boxShadow: "0 0 30px rgba(255,79,216,0.7)"
+                  }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => navigate('/admin')}
+                >
+                  <span className="flex items-center justify-center space-x-2">
+                    <Lock className="w-5 h-5" />
+                    <span>Admin Panel</span>
+                  </span>
                 </motion.button>
               </motion.div>
             </div>

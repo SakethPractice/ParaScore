@@ -74,12 +74,6 @@ const handleSubmit = async (e) => {
     }
   }
 
-  if (game?.inputType === "rank") {
-    if (formData.score === "P") {
-      isCheater = true;
-    }
-  }
-
   if (isCheater) {
     setShowCheaterWarning(true);
     setTimeout(() => setShowCheaterWarning(false), 4000);
@@ -117,7 +111,8 @@ const handleSubmit = async (e) => {
     }, 2000);
   } catch (err) {
     console.error(err);
-    alert("Error submitting score");
+    const errorMessage = err.response?.data?.error || "Error submitting score";
+    alert(errorMessage);
     setIsSubmitting(false);
   }
 };
