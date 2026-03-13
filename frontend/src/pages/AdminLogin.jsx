@@ -188,11 +188,6 @@ const AdminLogin = () => {
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back to Home
             </button>
-
-            <div className="mt-6 p-3 bg-[#0B0F2F] rounded text-xs text-[#00E5FF]">
-              <p className="font-bold mb-2">Demo Credentials:</p>
-              <p>admin / deltatime2024</p>
-            </div>
           </form>
         </div>
       </div>

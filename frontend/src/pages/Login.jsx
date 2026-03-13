@@ -103,13 +103,6 @@ disabled={isLoading}
 {isLoading ? "Logging in..." : "Login"}
 </button>
 
-<div className="mt-4 p-3 bg-[#0B0F2F] rounded text-xs text-[#00E5FF]">
-<p className="font-bold mb-2">Demo Credentials:</p>
-<p>terminal1 / terminal1</p>
-<p>terminal2 / terminal2</p>
-<p>terminal3 / terminal3</p>
-</div>
-
 </form>
 
 </div>

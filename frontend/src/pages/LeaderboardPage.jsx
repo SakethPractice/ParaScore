@@ -91,7 +91,21 @@ const allScores = res.data;
 
 const filtered = allScores
 .filter(s=>s.game === activeGame)
-.sort((a,b)=>b.score - a.score)
+.sort((a,b)=> {
+  // For NFS: lower time is better (ascending sort)
+  if(activeGame === 'NFS') {
+    const timeToMs = (timeStr) => {
+      const parts = String(timeStr).split(':');
+      if(parts.length === 3) {
+        return (parseInt(parts[0]) || 0) * 60000 + (parseInt(parts[1]) || 0) * 1000 + (parseInt(parts[2]) || 0);
+      }
+      return Infinity;
+    };
+    return timeToMs(a.score) - timeToMs(b.score);
+  }
+  // For ALTOS & ULTRAKILL: higher is better (descending sort)
+  return b.score - a.score;
+})
 .slice(0,5)
 .map((player,index)=>({
 rank:index+1,

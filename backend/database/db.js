@@ -69,10 +69,10 @@ const initialize = async () => {
 
     // Insert default users with properly hashed passwords
     const users = [
-      { username: 'admin', password: 'deltatime2024', role: 'admin' },
-      { username: 'terminal1', password: 'terminal1', role: 'terminal' },
-      { username: 'terminal2', password: 'terminal2', role: 'terminal' },
-      { username: 'terminal3', password: 'terminal3', role: 'terminal' }
+      { username: 'admin', password: 'painoob', role: 'admin' },
+      { username: 'nfs', password: 'nfs123', role: 'terminal' },
+      { username: 'alto', password: 'alto123', role: 'terminal' },
+      { username: 'ultrakill', password: 'ultra123', role: 'terminal' }
     ];
 
     for (const user of users) {
